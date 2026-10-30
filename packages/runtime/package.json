@@ -36,7 +36,7 @@
     "jsonpath-plus": "^10.4.0",
     "openai": "^6.49.0",
     "postal-mime": "^2.7.6",
-    "three": "^0.182.0",
+    "three": "^0.186.1",
     "three-bvh-csg": "^0.0.17",
     "twilio": "^5.13.1",
     "uuid": "^13.0.2",
