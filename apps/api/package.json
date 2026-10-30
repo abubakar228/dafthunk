@@ -47,7 +47,7 @@
     "@dafthunk/utils": "workspace:*",
     "@google/genai": "^1.52.0",
     "@hono-rate-limiter/cloudflare": "^0.2.2",
-    "@hono/oauth-providers": "^0.8.8",
+    "@hono/oauth-providers": "^0.9.0",
     "@hono/zod-validator": "^0.7.6",
     "agents": "^0.20.1",
     "aws4fetch": "^1.0.20",
