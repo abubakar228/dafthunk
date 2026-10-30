@@ -1,0 +1,45 @@
+{
+  "name": "@dafthunk/www",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "extract-nodes": "npx tsx scripts/extract-node-types.ts",
+    "prebuild": "pnpm run extract-nodes",
+    "build": "react-router build",
+    "dev": "react-router dev",
+    "lint": "biome check",
+    "pretypecheck": "pnpm run extract-nodes",
+    "typecheck": "tsc --noEmit",
+    "check": "biome check --write",
+    "preview": "vite preview",
+    "deploy": "pnpm run build && wrangler deploy",
+    "format": "biome format --write",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.562.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-router": "^8.3.1",
+    "shiki": "^3.23.0",
+    "tailwind-merge": "^3.6.0"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.54.4",
+    "@cloudflare/workers-types": "~5.20260730.1",
+    "@react-router/dev": "^8.3.1",
+    "@tailwindcss/typography": "^0.5.20",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.13",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.6",
+    "vitest": "^4.1.11",
+    "wrangler": "^4.129.0"
+  }
+}

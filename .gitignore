@@ -1,0 +1,18 @@
+.DS_Store
+
+.env
+.dev.vars
+
+node_modules
+dist
+.wrangler
+tsconfig.tsbuildinfo
+.react-router
+coverage
+
+.idea
+.pnpm-store
+
+# Font binaries are fetched on demand (pnpm --filter '@dafthunk/runtime' fonts:fetch),
+# not committed. Keep the README; ignore the per-family TTF/license dirs.
+packages/runtime/src/fonts/*/

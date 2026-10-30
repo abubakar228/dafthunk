@@ -1,0 +1,557 @@
+/**
+ * For more details on how to configure Wrangler, refer to:
+ * https://developers.cloudflare.com/workers/wrangler/configuration/
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "dafthunk-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-11-17",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  /**
+   * Smart Placement
+   * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
+   */
+  // "placement": { "mode": "smart" },
+  /**
+   * Bindings
+   * Bindings allow your Worker to interact with resources on the Cloudflare Developer Platform, including
+   * databases, object storage, AI inference, real-time communication and more.
+   * https://developers.cloudflare.com/workers/runtime-apis/bindings/
+   */
+  "alias": {
+    "iconv-lite": "./src/stubs/empty-module.ts"
+  },
+  "define": {
+    "RUNTIME_VERSION": "\"development\""
+  },
+  "ai": {
+    "binding": "AI"
+  },
+  // AI Search (formerly AutoRAG) namespace binding. Dataset search resolves
+  // instances by name (DATASETS_AUTORAG) within this namespace at runtime.
+  "ai_search_namespaces": [
+    {
+      "binding": "AI_SEARCH",
+      "namespace": "default"
+    }
+  ],
+  "containers": [
+    {
+      "class_name": "FFmpegContainer",
+      "image": "./containers/ffmpeg/Dockerfile",
+      "max_instances": 5,
+      "instance_type": "standard-1"
+    },
+    {
+      "class_name": "Sandbox",
+      "image": "./containers/duckdb/Dockerfile",
+      "max_instances": 5,
+      "instance_type": "standard-1"
+    },
+    {
+      "class_name": "LanguageSandbox",
+      "image": "./Dockerfile",
+      "max_instances": 5,
+      "instance_type": "standard-1"
+    }
+  ],
+  "worker_loaders": [{ "binding": "LOADER" }],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "dafthunk-development",
+      "database_id": "05b1b8e5-d566-47b8-9085-161de45bbd25",
+      "preview_database_id": "05b1b8e5-d566-47b8-9085-161de45bbd25",
+      "migrations_dir": "./src/db/migrations"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "KV",
+      "id": "f4c065abb26742bdb9655c3cdda905b7"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "RESSOURCES",
+      "bucket_name": "dafthunk-ressources-development",
+      "preview_bucket_name": "dafthunk-ressources-development"
+    },
+    {
+      "binding": "DATASETS",
+      "bucket_name": "dafthunk-datasets-development",
+      "preview_bucket_name": "dafthunk-datasets-development"
+    },
+    {
+      "binding": "INBOXES",
+      "bucket_name": "dafthunk-inboxes-development",
+      "preview_bucket_name": "dafthunk-inboxes-development"
+    }
+  ],
+  "workflows": [
+    {
+      "name": "dafthunk-api",
+      "binding": "EXECUTE",
+      "class_name": "Runtime"
+    }
+  ],
+  "queues": {
+    "producers": [
+      {
+        "binding": "WORKFLOW_QUEUE",
+        "queue": "dafthunk-workflow-queue"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "dafthunk-workflow-queue",
+        "max_batch_size": 10,
+        "max_batch_timeout": 30
+      }
+    ]
+  },
+  "triggers": {
+    "crons": ["* * * * *"]
+  },
+  "analytics_engine_datasets": [
+    {
+      "binding": "EXECUTIONS",
+      "dataset": "dafthunk_executions_development"
+    },
+    {
+      "binding": "GENERATIONS",
+      "dataset": "dafthunk_generations_development"
+    }
+  ],
+  "send_email": [
+    {
+      "name": "SEND_EMAIL",
+      "remote": true
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "DATABASE",
+        "class_name": "DatabaseDO",
+        "script_name": "dafthunk-api"
+      },
+      {
+        "name": "AGENT_RUNNER",
+        "class_name": "AgentRunner",
+        "script_name": "dafthunk-api"
+      },
+      {
+        "name": "WORKFLOW_AGENT",
+        "class_name": "WorkflowAgent",
+        "script_name": "dafthunk-api"
+      },
+      {
+        "name": "FFMPEG_CONTAINER",
+        "class_name": "FFmpegContainer"
+      },
+      {
+        "name": "DUCKDB_SANDBOX",
+        "class_name": "Sandbox"
+      },
+      {
+        "name": "SANDBOX",
+        "class_name": "LanguageSandbox"
+      },
+      {
+        "name": "MAILBOX",
+        "class_name": "MailboxDO",
+        "script_name": "dafthunk-api"
+      },
+      {
+        "name": "EMAIL_AGENT_RUNNER",
+        "class_name": "EmailAgentRunner",
+        "script_name": "dafthunk-api"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_classes": ["WorkflowSession"]
+    },
+    {
+      "tag": "v2",
+      "new_sqlite_classes": ["DatabaseDO"]
+    },
+    {
+      "tag": "v3",
+      "new_sqlite_classes": ["AgentRunner"]
+    },
+    {
+      "tag": "v4",
+      "new_sqlite_classes": ["FFmpegContainer"]
+    },
+    {
+      "tag": "v5",
+      "new_sqlite_classes": ["DiscordBot"]
+    },
+    {
+      "tag": "v6",
+      "deleted_classes": ["DiscordBot"]
+    },
+    {
+      "tag": "v7",
+      "new_sqlite_classes": ["Sandbox"]
+    },
+    {
+      "tag": "v8"
+    },
+    {
+      "tag": "v9",
+      "deleted_classes": ["WorkflowSession"]
+    },
+    {
+      "tag": "v10",
+      "new_sqlite_classes": ["WorkflowAgent"]
+    },
+    {
+      "tag": "v11",
+      "new_sqlite_classes": ["LanguageSandbox"]
+    },
+    {
+      "tag": "v12",
+      "new_sqlite_classes": ["MailboxDO"]
+    },
+    {
+      "tag": "v13",
+      "new_sqlite_classes": ["EmailAgentRunner"]
+    },
+    {
+      "tag": "v14",
+      "new_sqlite_classes": ["WorkflowGeneratorAgent"]
+    },
+    {
+      "tag": "v15",
+      "deleted_classes": ["WorkflowGeneratorAgent"]
+    }
+  ],
+  "unsafe": {
+    "bindings": [
+      {
+        "name": "RATE_LIMIT_DEFAULT",
+        "type": "ratelimit",
+        "namespace_id": "1001",
+        "simple": {
+          "limit": 500,
+          "period": 60
+        }
+      },
+      {
+        "name": "RATE_LIMIT_AUTH",
+        "type": "ratelimit",
+        "namespace_id": "1002",
+        "simple": {
+          "limit": 10,
+          "period": 60
+        }
+      },
+      {
+        "name": "RATE_LIMIT_EXECUTE",
+        "type": "ratelimit",
+        "namespace_id": "1003",
+        "simple": {
+          "limit": 30,
+          "period": 60
+        }
+      }
+    ]
+  },
+  /**
+   * Environment Variables
+   * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
+   */
+  "vars": {
+    "WEB_HOST": "https://app.dafthunk.com",
+    "WEBSITE_URL": "https://www.dafthunk.com",
+    "EMAIL_DOMAIN": "mail.dafthunk.com",
+    "SEND_EMAIL_FROM": "noreply@mail.dafthunk.com",
+    "SUPPORT_EMAIL_HANDLE": "bertil",
+    "SUPPORT_EMAIL_FROM": "bertil@dafthunk.com",
+    // Placeholder for the future AutoRAG instance over the INBOXES bucket;
+    // wire it up via the Cloudflare dashboard, then set this to the name.
+    "INBOXES_AUTORAG": ""
+  },
+  "env": {
+    "production": {
+      "name": "dafthunk-api",
+      "compatibility_date": "2024-10-22",
+      "observability": {
+        "enabled": true,
+        "head_sampling_rate": 1
+      },
+      "workflows": [
+        {
+          "name": "dafthunk-api",
+          "binding": "EXECUTE",
+          "class_name": "Runtime"
+        }
+      ],
+      "browser": {
+        "binding": "BROWSER"
+      },
+      "ai": {
+        "binding": "AI"
+      },
+      // AI Search (formerly AutoRAG) namespace binding. Dataset search resolves
+      // instances by name (DATASETS_AUTORAG) within this namespace at runtime.
+      "ai_search_namespaces": [
+        {
+          "binding": "AI_SEARCH",
+          "namespace": "default"
+        }
+      ],
+      "containers": [
+        {
+          "class_name": "FFmpegContainer",
+          "image": "./containers/ffmpeg/Dockerfile",
+          "max_instances": 5,
+          "instance_type": "standard-1"
+        },
+        {
+          "class_name": "Sandbox",
+          "image": "./containers/duckdb/Dockerfile",
+          "max_instances": 5,
+          "instance_type": "standard-1"
+        },
+        {
+          "class_name": "LanguageSandbox",
+          "image": "./Dockerfile",
+          "max_instances": 5,
+          "instance_type": "standard-1"
+        }
+      ],
+      "worker_loaders": [{ "binding": "LOADER" }],
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "dafthunk-production",
+          "database_id": "1d40113a-d6ec-4a46-8ba8-7958ee15b79a",
+          "preview_database_id": "1d40113a-d6ec-4a46-8ba8-7958ee15b79a",
+          "migrations_dir": "./src/db/migrations"
+        }
+      ],
+      "kv_namespaces": [
+        {
+          "binding": "KV",
+          "id": "f6129098413146f7ba3b4c6ac8bd0c82"
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "RESSOURCES",
+          "bucket_name": "dafthunk-ressources-production"
+        },
+        {
+          "binding": "DATASETS",
+          "bucket_name": "dafthunk-datasets-production"
+        },
+        {
+          "binding": "INBOXES",
+          "bucket_name": "dafthunk-inboxes-production"
+        }
+      ],
+      "analytics_engine_datasets": [
+        {
+          "binding": "EXECUTIONS",
+          "dataset": "dafthunk_executions_production"
+        },
+        {
+          "binding": "GENERATIONS",
+          "dataset": "dafthunk_generations_production"
+        }
+      ],
+      "send_email": [
+        {
+          "name": "SEND_EMAIL"
+        }
+      ],
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "DATABASE",
+            "class_name": "DatabaseDO",
+            "script_name": "dafthunk-api"
+          },
+          {
+            "name": "AGENT_RUNNER",
+            "class_name": "AgentRunner",
+            "script_name": "dafthunk-api"
+          },
+          {
+            "name": "WORKFLOW_AGENT",
+            "class_name": "WorkflowAgent",
+            "script_name": "dafthunk-api"
+          },
+          {
+            "name": "FFMPEG_CONTAINER",
+            "class_name": "FFmpegContainer"
+          },
+          {
+            "name": "DUCKDB_SANDBOX",
+            "class_name": "Sandbox"
+          },
+          {
+            "name": "SANDBOX",
+            "class_name": "LanguageSandbox"
+          },
+          {
+            "name": "MAILBOX",
+            "class_name": "MailboxDO",
+            "script_name": "dafthunk-api"
+          },
+          {
+            "name": "EMAIL_AGENT_RUNNER",
+            "class_name": "EmailAgentRunner",
+            "script_name": "dafthunk-api"
+          }
+        ]
+      },
+      "migrations": [
+        {
+          "tag": "v1",
+          "new_classes": ["WorkflowSession"]
+        },
+        {
+          "tag": "v2",
+          "new_sqlite_classes": ["DatabaseDO"]
+        },
+        {
+          "tag": "v3",
+          "new_sqlite_classes": ["AgentRunner"]
+        },
+        {
+          "tag": "v4",
+          "new_sqlite_classes": ["FFmpegContainer"]
+        },
+        {
+          "tag": "v5",
+          "new_sqlite_classes": ["DiscordBot"]
+        },
+        {
+          "tag": "v6",
+          "deleted_classes": ["DiscordBot"]
+        },
+        {
+          "tag": "v7",
+          "new_sqlite_classes": ["Sandbox"]
+        },
+        {
+          "tag": "v8"
+        },
+        {
+          "tag": "v9",
+          "deleted_classes": ["WorkflowSession"]
+        },
+        {
+          "tag": "v10",
+          "new_sqlite_classes": ["WorkflowAgent"]
+        },
+        {
+          "tag": "v11",
+          "new_sqlite_classes": ["LanguageSandbox"]
+        },
+        {
+          "tag": "v12",
+          "new_sqlite_classes": ["MailboxDO"]
+        },
+        {
+          "tag": "v13",
+          "new_sqlite_classes": ["EmailAgentRunner"]
+        },
+        {
+          "tag": "v14",
+          "new_sqlite_classes": ["WorkflowGeneratorAgent"]
+        },
+        {
+          "tag": "v15",
+          "deleted_classes": ["WorkflowGeneratorAgent"]
+        }
+      ],
+      "unsafe": {
+        "bindings": [
+          {
+            "name": "RATE_LIMIT_DEFAULT",
+            "type": "ratelimit",
+            "namespace_id": "1001",
+            "simple": {
+              "limit": 500,
+              "period": 60
+            }
+          },
+          {
+            "name": "RATE_LIMIT_AUTH",
+            "type": "ratelimit",
+            "namespace_id": "1002",
+            "simple": {
+              "limit": 10,
+              "period": 60
+            }
+          },
+          {
+            "name": "RATE_LIMIT_EXECUTE",
+            "type": "ratelimit",
+            "namespace_id": "1003",
+            "simple": {
+              "limit": 30,
+              "period": 60
+            }
+          }
+        ]
+      },
+      "vars": {
+        "WEB_HOST": "https://app.dafthunk.com",
+        "WEBSITE_URL": "https://www.dafthunk.com",
+        "EMAIL_DOMAIN": "mail.dafthunk.com",
+        "SEND_EMAIL_FROM": "noreply@mail.dafthunk.com",
+        "SUPPORT_EMAIL_HANDLE": "bertil",
+        "SUPPORT_EMAIL_FROM": "bertil@dafthunk.com",
+        // Placeholder for the future AutoRAG instance over the INBOXES bucket;
+        // wire it up via the Cloudflare dashboard, then set this to the name.
+        "INBOXES_AUTORAG": ""
+      },
+      "queues": {
+        "producers": [
+          {
+            "binding": "WORKFLOW_QUEUE",
+            "queue": "dafthunk-workflow-queue"
+          }
+        ],
+        "consumers": [
+          {
+            "queue": "dafthunk-workflow-queue",
+            "max_batch_size": 10,
+            "max_batch_timeout": 30
+          }
+        ]
+      },
+      "triggers": {
+        "crons": ["* * * * *"]
+      }
+    }
+  }
+  /**
+   * Note: Use secrets to store sensitive data.
+   * https://developers.cloudflare.com/workers/configuration/secrets/
+   */
+  /**
+   * Static Assets
+   * https://developers.cloudflare.com/workers/static-assets/binding/
+   */
+  // "assets": { "directory": "./public/", "binding": "ASSETS" },
+  /**
+   * Service Bindings (communicate between multiple Workers)
+   * https://developers.cloudflare.com/workers/wrangler/configuration/#service-bindings
+   */
+  // "services": [{ "binding": "MY_SERVICE", "service": "my-service" }]
+}
