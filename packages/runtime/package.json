@@ -19,7 +19,7 @@
     "fonts:fetch": "node scripts/fetch-fonts.mjs"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.71.2",
+    "@anthropic-ai/sdk": "^1.3.0",
     "@cf-wasm/photon": "^0.3.7",
     "@cf-wasm/png": "^0.3.4",
     "@cf-wasm/resvg": "^0.3.5",
